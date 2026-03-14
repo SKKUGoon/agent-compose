@@ -1,0 +1,314 @@
+models:
+  TestInput:
+    type: object
+    fields:
+      note:
+        type: string
+        nullable: true
+  
+  TestOutput:
+    type: object
+    fields:
+      note:
+        type: boolean
+        required: true
+
+  CountryCandidate:
+    type: object
+    fields:
+      country:
+        type: string
+        required: true
+        min_length: 1
+      note:
+        type: string
+        nullable: true
+
+  CityCandidate:
+    type: object
+    fields:
+      country:
+        type: string
+        nullable: true
+      city:
+        type: string
+        nullable: true
+      entity:
+        type: string
+        nullable: true
+      note:
+        type: string
+        nullable: true
+
+  AssetTag:
+    type: object
+    fields:
+      upper:
+        type: string
+        required: true
+        enum: [FX, Debt, Equities, Commodities, PrivateMarkets, Derivatives, AlternativeSignals, Other]
+      lower:
+        type: string
+        required: true
+        enum: [ForeignExchange, SovereignDebt, CorporateDebt, EquitiesDM, EquitiesEM, Oil, Gold, Silver, Copper, Platinum, Uranium, RealEstate, PrivateEquity, Future, Option, Swap, PredictionMarkets, SocialStability, Other]
+
+  PolicyTag:
+    type: object
+    fields:
+      upper:
+        type: string
+        required: true
+        enum: [Monetary, Fiscal, Trade, Sanctions, CapitalFinancialControls, IndustrialStrategic, DomesticStabilityGovernance, Other]
+      lower:
+        type: string
+        required: true
+        enum: [RateDecision, ForwardGuidance, BalanceSheetQEQT, LiquidityFacility, FXIntervention, BudgetSpending, TaxChange, Subsidy, Austerity, SovereignFunding, Tariff, ExportControl, ImportRestriction, TradeAgreement, Quota, FinancialSanction, SecondarySanction, AssetFreeze, EntityListing, EnergySanction, CapitalControl, BankingRegulation, MacroPrudential, PaymentRestriction, MarketHalt, IndustrialPolicy, CriticalMineralsPolicy, TechSovereignty, DefenseProcurement, EnergySecurityPolicy, EmergencyPowers, ElectionRuleChange, CivilOrderPolicy, MigrationBorderPolicy, PublicHealthMandate, Other]
+
+  EventTag:
+    type: object
+    fields:
+      label:
+        type: string
+        required: true
+        enum: [WarKinetic, MilitaryPosture, Election, CivilUnrest, SovereignDefault, BankingStress, Epidemic, NaturalDisaster, CyberIncident, Other]
+
+  AssetCandidate:
+    type: object
+    fields:
+      tag:
+        $ref: AssetTag
+        required: true
+      note:
+        type: string
+        nullable: true
+
+  PolicyCandidate:
+    type: object
+    fields:
+      tag:
+        $ref: PolicyTag
+        required: true
+      note:
+        type: string
+        nullable: true
+
+  EventCandidate:
+    type: object
+    fields:
+      tag:
+        $ref: EventTag
+        required: true
+      note:
+        type: string
+        nullable: true
+
+  PerceptionInput:
+    type: object
+    fields:
+      title:
+        type: string
+        required: true
+      summary:
+        type: string
+        required: true
+
+  PerceptionOutput:
+    type: object
+    fields:
+      perceived_news:
+        type: string
+        required: true
+
+  GatekeeperInput:
+    type: object
+    fields:
+      perceived_news:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      summary:
+        type: string
+        required: true
+
+  GatekeeperOutput:
+    type: object
+    fields:
+      passed_gatekeeper:
+        type: boolean
+        required: true
+      reason:
+        type: string
+        required: true
+
+  CountryInput:
+    type: object
+    fields:
+      perceived_news:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      summary:
+        type: string
+        required: true
+
+  CountryOutput:
+    type: object
+    fields:
+      countries:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: CountryCandidate
+
+  AssetInput:
+    type: object
+    fields:
+      perceived_news:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      summary:
+        type: string
+        required: true
+
+  AssetOutput:
+    type: object
+    fields:
+      assets:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: AssetCandidate
+
+  PolicyInput:
+    type: object
+    fields:
+      perceived_news:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      summary:
+        type: string
+        required: true
+
+  PolicyOutput:
+    type: object
+    fields:
+      policies:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: PolicyCandidate
+
+  EventInput:
+    type: object
+    fields:
+      perceived_news:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      summary:
+        type: string
+        required: true
+
+  EventOutput:
+    type: object
+    fields:
+      events:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: EventCandidate
+
+  CityInput:
+    type: object
+    fields:
+      perceived_news:
+        type: string
+        required: true
+      countries:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: CountryCandidate
+
+  CityOutput:
+    type: object
+    fields:
+      cities:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: CityCandidate
+
+  LegacyThemeProjection:
+    type: object
+    fields:
+      upper:
+        type: string
+        required: true
+      lower:
+        type: string
+        required: true
+
+  PipelineOutput:
+    type: object
+    fields:
+      passed_gatekeeper:
+        type: boolean
+        required: true
+      gatekeeper_reason:
+        type: string
+        required: true
+      summary_distilled:
+        type: string
+        required: true
+      countries:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: CountryCandidate
+      cities:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: CityCandidate
+      assets:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: AssetCandidate
+      policies:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: PolicyCandidate
+      events:
+        type: array
+        required: true
+        default: []
+        items:
+          $ref: EventCandidate
+      legacy_theme:
+        $ref: LegacyThemeProjection
+        required: true

@@ -1,0 +1,160 @@
+version: "2"
+name: news-cleaning
+
+schema:
+  file: datamodels.yaml
+
+chains:
+  test:
+    provider:
+      kind: openai
+      api_key: ${env:OPENAI_API_KEY}
+      default_model: gpt-5-nano
+    
+    runtime:
+      context_mode: merged_and_refs
+      skip_policy: none
+      retry:
+        contract_max_attempts: 1
+        contract_backoff_ms: 0
+    
+    serve:
+      host: 127.0.0.1
+      port: 8788
+      description: Test pipeline
+
+    agents:
+      test:
+        instructions: |
+          You are the test agent. Input is JSON. Return ONLY TestOutput.
+        input_model: TestInput
+        output_model: TestOutput
+
+    tasks:
+      test:
+        agent: test
+        input:
+          note: ${{ input.note }}
+      
+    output:
+      from: tasks.test.output
+
+  news_cleaning:
+    provider:
+      kind: openai
+      api_key: ${env:OPENAI_API_KEY}
+      default_model: gpt-5-nano
+
+    runtime:
+      context_mode: merged_and_refs
+      skip_policy: gatekeeper_controlled
+      retry:
+        contract_max_attempts: 2
+        contract_backoff_ms: 300
+      gatekeeper:
+        task: gate
+        field: passed_gatekeeper
+        skip_tasks: [classify, city]
+
+    serve:
+      host: 127.0.0.1
+      port: 8787
+      description: News cleaning pipeline
+
+    agents:
+      perception:
+        instructions: |
+          You are the perception stage. Input is JSON. Summarize what is happening,
+          who is involved, and where in plain language. Do not invent facts. Return ONLY
+          PerceptionOutput.
+        input_model: PerceptionInput
+        output_model: PerceptionOutput
+
+      gatekeeper:
+        instructions: |
+          You are the gatekeeper stage. Input is JSON. Decide passed_gatekeeper for
+          geopolitical or geo-economic relevance, including financial market relevance.
+          Return ONLY GatekeeperOutput.
+        input_model: GatekeeperInput
+        output_model: GatekeeperOutput
+
+      country:
+        instructions: |
+          You are the country classifier. Input is JSON. Extract all directly relevant
+          countries. Return ONLY CountryOutput.
+        input_model: CountryInput
+        output_model: CountryOutput
+
+      asset:
+        instructions: |
+          You are the asset classifier. Input is JSON. Select one or more canonical
+          asset tags (upper/lower) when relevant. Return ONLY AssetOutput.
+        input_model: AssetInput
+        output_model: AssetOutput
+
+      policy:
+        instructions: |
+          You are the policy classifier. Input is JSON. Select one or more canonical
+          policy tags (upper/lower) when relevant. Return ONLY PolicyOutput.
+        input_model: PolicyInput
+        output_model: PolicyOutput
+
+      event:
+        instructions: |
+          You are the event classifier. Input is JSON. Select one or more canonical
+          event labels when relevant. Return ONLY EventOutput.
+        input_model: EventInput
+        output_model: EventOutput
+
+      city:
+        instructions: |
+          You are the city classifier. Input is JSON. Use countries as anchor and
+          output all relevant cities. Return ONLY CityOutput.
+        input_model: CityInput
+        output_model: CityOutput
+
+    tasks:
+      perceive:
+        agent: perception
+        input:
+          title: ${{ input.title }}
+          summary: ${{ input.summary }}
+
+      gate:
+        needs: [perceive]
+        agent: gatekeeper
+        input:
+          perceived_news: ${{ tasks.perceive.output.perceived_news }}
+          title: ${{ input.title }}
+          summary: ${{ input.summary }}
+
+      classify:
+        needs: [gate]
+        agents: [country, asset, policy, event]
+        input:
+          perceived_news: ${{ tasks.perceive.output.perceived_news }}
+          title: ${{ input.title }}
+          summary: ${{ input.summary }}
+
+      city:
+        needs: [classify]
+        agent: city
+        input:
+          perceived_news: ${{ tasks.perceive.output.perceived_news }}
+          countries: ${{ tasks.classify.country.countries }}
+
+      finalize:
+        needs: [gate, classify, city]
+        step: build_pipeline_output
+        input:
+          passed_gatekeeper: ${{ tasks.gate.output.passed_gatekeeper }}
+          gatekeeper_reason: ${{ tasks.gate.output.reason }}
+          perceived_news: ${{ tasks.perceive.output.perceived_news }}
+          countries: ${{ tasks.classify.country.countries }}
+          assets: ${{ tasks.classify.asset.assets }}
+          policies: ${{ tasks.classify.policy.policies }}
+          events: ${{ tasks.classify.event.events }}
+          cities: ${{ tasks.city.output.cities }}
+
+    output:
+      from: tasks.finalize.output
