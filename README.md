@@ -3,7 +3,7 @@
 [![agent-compose](https://github.com/SKKUGoon/agent-compose/actions/workflows/agent-compose.yml/badge.svg)](https://github.com/SKKUGoon/agent-compose/actions/workflows/agent-compose.yml)
 ![Rust](https://img.shields.io/badge/rust-2024%20edition-orange)
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)
-![Tag](https://img.shields.io/badge/tag-vX.Y.Z-blue)
+![Tag](https://img.shields.io/badge/tag-v0.1.0-blue)
 
 `agent-compose` is a Rust CLI for running multi-step AI pipelines from YAML. You define a chain once, then run it locally, expose it as HTTP/MCP, or call it from other tools.
 
@@ -139,7 +139,6 @@ Place screenshots in `./images` using these names:
 
 ![CLI run screenshot](./images/cli-run.png)
 ![Serve status screenshot](./images/serve-status.png)
-![MCP spec screenshot](./images/mcp-spec.png)
 
 ## MCP spec command
 
