@@ -1,3 +1,4 @@
+use super::constants::SUPPORTED_STEPS;
 use super::ComposeConfig;
 use std::collections::{HashMap, HashSet, VecDeque};
 
@@ -93,6 +94,31 @@ impl ComposeConfig {
             ));
         }
 
+        if chain.runtime.skip_policy == super::SkipPolicy::GatekeeperControlled {
+            if chain.runtime.gatekeeper.task.trim().is_empty() {
+                return Err(format!(
+                    "chains.{chain_id}.runtime.gatekeeper.task cannot be empty"
+                ));
+            }
+            if chain.runtime.gatekeeper.field.trim().is_empty() {
+                return Err(format!(
+                    "chains.{chain_id}.runtime.gatekeeper.field cannot be empty"
+                ));
+            }
+            if chain.runtime.gatekeeper.skip_tasks.is_empty() {
+                return Err(format!(
+                    "chains.{chain_id}.runtime.gatekeeper.skip_tasks cannot be empty"
+                ));
+            }
+            for skip_task in &chain.runtime.gatekeeper.skip_tasks {
+                if !chain.tasks.contains_key(skip_task) {
+                    return Err(format!(
+                        "chains.{chain_id}.runtime.gatekeeper.skip_tasks contains unknown task: {skip_task}"
+                    ));
+                }
+            }
+        }
+
         for (task_id, task) in &chain.tasks {
             for dep in &task.needs {
                 if !chain.tasks.contains_key(dep) {
@@ -111,6 +137,11 @@ impl ComposeConfig {
             }
             if task.step.is_some() {
                 choices += 1;
+            }
+            if task.python_step.is_some() {
+                return Err(format!(
+                    "chains.{chain_id}.tasks.{task_id}.python_step is invalid; use Rust step"
+                ));
             }
             if choices != 1 {
                 return Err(format!(
@@ -146,6 +177,13 @@ impl ComposeConfig {
             {
                 return Err(format!(
                     "chains.{chain_id}.tasks.{task_id}.step cannot be empty"
+                ));
+            }
+            if let Some(step) = &task.step
+                && !SUPPORTED_STEPS.contains(&step.as_str())
+            {
+                return Err(format!(
+                    "chains.{chain_id}.tasks.{task_id}.step unknown Rust step: {step}"
                 ));
             }
 

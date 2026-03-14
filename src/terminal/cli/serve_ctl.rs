@@ -4,6 +4,7 @@ use serde::Serialize;
 use serde_json::json;
 use std::fs;
 use std::io::{self, IsTerminal};
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -345,7 +346,7 @@ fn log_file(chain: &str) -> Result<PathBuf, String> {
     Ok(state_dir()?.join(format!("{chain}.log")))
 }
 
-fn read_pid(path: &PathBuf) -> Result<Option<u32>, String> {
+fn read_pid(path: &Path) -> Result<Option<u32>, String> {
     if !path.exists() {
         return Ok(None);
     }

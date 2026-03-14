@@ -5,7 +5,7 @@ This repository implements `agent-compose` v2 in Rust.
 ## Hard Rules
 
 - v2 only; no backward compatibility with `defaults`.
-- Use top-level `provider` (singular) for model backend configuration.
+- Multi-chain is first-class. Configuration is top-level metadata plus a non-empty `chains` map.
 - API key values must support env interpolation syntax in YAML.
 - Each task must define exactly one executor: `agent`, `agents`, or `step`.
 - `step` is Rust-only.
@@ -17,19 +17,27 @@ This repository implements `agent-compose` v2 in Rust.
 
 - [ ] `version` exists and equals `"2"`.
 - [ ] `name` is a non-empty string.
-- [ ] `provider` exists.
-- [ ] `runtime` exists.
 - [ ] `schema.file` exists.
-- [ ] `agents` exists and is non-empty.
-- [ ] `tasks` exists and is non-empty.
-- [ ] `output.from` exists.
+- [ ] `chains` exists and is non-empty.
+
+### Chains
+
+- [ ] `chains.<id>` key is non-empty.
+- [ ] `chains.<id>.provider` exists.
+- [ ] `chains.<id>.runtime` exists.
+- [ ] `chains.<id>.agents` exists and is non-empty.
+- [ ] `chains.<id>.tasks` exists and is non-empty.
+- [ ] `chains.<id>.output.from` exists.
+- [ ] `chains.<id>.serve.host` non-empty.
+- [ ] `chains.<id>.serve.port` valid `u16`.
+- [ ] `(serve.host, serve.port)` pair is unique across chains.
 
 ### Provider
 
-- [ ] `provider.kind` in `openai | anthropic | ollama`.
-- [ ] `provider.api_key` is non-empty after env interpolation.
-- [ ] `provider.default_model` optional string.
-- [ ] `provider.base_url` optional string.
+- [ ] `chains.<id>.provider.kind` in `openai | anthropic | ollama`.
+- [ ] `chains.<id>.provider.api_key` is non-empty after env interpolation.
+- [ ] `chains.<id>.provider.default_model` optional string.
+- [ ] `chains.<id>.provider.base_url` optional string.
 
 ### Env Interpolation
 
@@ -39,28 +47,28 @@ This repository implements `agent-compose` v2 in Rust.
 
 ### Runtime
 
-- [ ] `runtime.context_mode` in `merged_and_refs | refs_only | merged_only`.
-- [ ] `runtime.skip_policy` in `none | gatekeeper_controlled`.
-- [ ] If `gatekeeper_controlled`, `runtime.gatekeeper` has:
+- [ ] `chains.<id>.runtime.context_mode` in `merged_and_refs | refs_only | merged_only`.
+- [ ] `chains.<id>.runtime.skip_policy` in `none | gatekeeper_controlled`.
+- [ ] If `gatekeeper_controlled`, `chains.<id>.runtime.gatekeeper` has:
   - [ ] `task`
   - [ ] `field`
   - [ ] `skip_tasks`
 
 ### Agents
 
-- [ ] `agents.<id>.instructions` non-empty.
-- [ ] `agents.<id>.input_model` references existing schema model.
-- [ ] `agents.<id>.output_model` references existing schema model.
-- [ ] `agents.<id>.model` optional override.
+- [ ] `chains.<id>.agents.<id>.instructions` non-empty.
+- [ ] `chains.<id>.agents.<id>.input_model` references existing schema model.
+- [ ] `chains.<id>.agents.<id>.output_model` references existing schema model.
+- [ ] `chains.<id>.agents.<id>.model` optional override.
 
 ### Tasks
 
-- [ ] `tasks.<id>.needs` references only known tasks.
+- [ ] `chains.<id>.tasks.<id>.needs` references only known tasks.
 - [ ] Exactly one executor present: `agent | agents | step`.
-- [ ] `tasks.<id>.agent` references known agent.
-- [ ] `tasks.<id>.agents` is non-empty and each is known.
-- [ ] `tasks.<id>.step` is known Rust step.
-- [ ] `tasks.<id>.input` resolves to object.
+- [ ] `chains.<id>.tasks.<id>.agent` references known agent.
+- [ ] `chains.<id>.tasks.<id>.agents` is non-empty and each is known.
+- [ ] `chains.<id>.tasks.<id>.step` is known Rust step.
+- [ ] `chains.<id>.tasks.<id>.input` resolves to object.
 
 ### External Schema File
 

@@ -109,7 +109,7 @@ impl ComposeRuntime {
                     .serve
                     .description
                     .clone()
-                    .unwrap_or_else(|| format!("{} chain", chain_id)),
+                    .unwrap_or_else(|| format!("{chain_id} chain")),
                 host: chain.serve.host.clone(),
                 port: chain.serve.port,
             });

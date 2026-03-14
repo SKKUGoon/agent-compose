@@ -183,6 +183,7 @@ pub struct TaskConfig {
     pub agent: Option<String>,
     pub agents: Option<Vec<String>>,
     pub step: Option<String>,
+    pub python_step: Option<String>,
     #[serde(default)]
     pub input: Value,
 }

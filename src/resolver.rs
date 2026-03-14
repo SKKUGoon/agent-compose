@@ -1,6 +1,23 @@
 use regex::Regex;
 use serde_json::Value;
+use std::sync::OnceLock;
 use thiserror::Error;
+
+fn full_ref_regex() -> &'static Regex {
+    static FULL_REF_REGEX: OnceLock<Regex> = OnceLock::new();
+    FULL_REF_REGEX.get_or_init(|| {
+        Regex::new(r"^\$\{\{\s*([^}]+?)\s*\}\}$")
+            .unwrap_or_else(|err| panic!("invalid full-ref regex: {err}"))
+    })
+}
+
+fn partial_ref_regex() -> &'static Regex {
+    static PARTIAL_REF_REGEX: OnceLock<Regex> = OnceLock::new();
+    PARTIAL_REF_REGEX.get_or_init(|| {
+        Regex::new(r"\$\{\{\s*([^}]+?)\s*\}\}")
+            .unwrap_or_else(|err| panic!("invalid partial-ref regex: {err}"))
+    })
+}
 
 #[derive(Debug, Error)]
 pub enum ResolveError {
@@ -30,8 +47,8 @@ pub fn resolve_refs(value: &Value, context: &Value) -> Result<Value, ResolveErro
 }
 
 fn resolve_string(input: &str, context: &Value) -> Result<Value, ResolveError> {
-    let full_re = Regex::new(r"^\$\{\{\s*([^}]+?)\s*\}\}$").expect("valid regex");
-    let partial_re = Regex::new(r"\$\{\{\s*([^}]+?)\s*\}\}").expect("valid regex");
+    let full_re = full_ref_regex();
+    let partial_re = partial_ref_regex();
 
     if let Some(caps) = full_re.captures(input)
         && let Some(expr) = caps.get(1)
@@ -42,8 +59,12 @@ fn resolve_string(input: &str, context: &Value) -> Result<Value, ResolveError> {
     let mut out = String::new();
     let mut last_end = 0;
     for cap in partial_re.captures_iter(input) {
-        let matched = cap.get(0).expect("matched by regex");
-        let expr = cap.get(1).expect("captured expression").as_str();
+        let Some(matched) = cap.get(0) else {
+            continue;
+        };
+        let Some(expr) = cap.get(1).map(|m| m.as_str()) else {
+            continue;
+        };
         out.push_str(&input[last_end..matched.start()]);
         let resolved = deep_get(context, expr)?;
         match resolved {
