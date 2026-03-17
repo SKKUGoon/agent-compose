@@ -1,0 +1,9 @@
+{
+  "chain": "healthEcon",
+  "config": "agent-compose.yaml",
+  "host": "127.0.0.1",
+  "port": 8789,
+  "pid": 72991,
+  "started_at_unix_ms": 1773766863800,
+  "log_path": ".agent-compose/healthEcon.log"
+}

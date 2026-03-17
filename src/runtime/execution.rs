@@ -148,7 +148,12 @@ impl ComposeRuntime {
                 "workflow output must resolve to object".to_string(),
             ));
         }
-        Ok(final_value)
+        let output = if let Some(model_name) = &self.config.output.model {
+            self.schema.validate(model_name, final_value)?
+        } else {
+            final_value
+        };
+        Ok(output)
     }
 
     async fn run_agent(

@@ -192,6 +192,7 @@ pub struct TaskConfig {
 pub struct OutputConfig {
     #[serde(rename = "from")]
     pub from_path: String,
+    pub model: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

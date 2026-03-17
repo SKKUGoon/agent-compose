@@ -38,123 +38,185 @@ chains:
       
     output:
       from: tasks.test.output
-
-  news_cleaning:
+  
+  healthEcon:
     provider:
       kind: openai
       api_key: ${env:OPENAI_API_KEY}
       default_model: gpt-5-nano
-
+    
     runtime:
       context_mode: merged_and_refs
-      skip_policy: gatekeeper_controlled
+      skip_policy: none
       retry:
         contract_max_attempts: 2
         contract_backoff_ms: 300
-      gatekeeper:
-        task: gate
-        field: passed_gatekeeper
-        skip_tasks: [classify, city]
 
     serve:
       host: 127.0.0.1
-      port: 8787
-      description: News cleaning pipeline
+      port: 8789
+      description: Health and economic analysis pipeline
 
     agents:
-      perception:
+      weight_agent:
         instructions: |
-          You are the perception stage. Input is JSON. Summarize what is happening,
-          who is involved, and where in plain language. Do not invent facts. Return ONLY
-          PerceptionOutput.
-        input_model: PerceptionInput
-        output_model: PerceptionOutput
+          You are inspecting the drug name. You are extracting the weight of the drug and the unit of the weight.
+          Units are e.g. mg, g, µg.
 
-      gatekeeper:
-        instructions: |
-          You are the gatekeeper stage. Input is JSON. Decide passed_gatekeeper for
-          geopolitical or geo-economic relevance, including financial market relevance.
-          Return ONLY GatekeeperOutput.
-        input_model: GatekeeperInput
-        output_model: GatekeeperOutput
+          If the drug name does not contain a weight, return -1 for the weight and "unknown" for the unit.
+          Return ONLY WeightOutput
+        input_model: DrugInput
+        output_model: WeightOutput
 
-      country:
+      volume_agent:
         instructions: |
-          You are the country classifier. Input is JSON. Extract all directly relevant
-          countries. Return ONLY CountryOutput.
-        input_model: CountryInput
-        output_model: CountryOutput
+          You are inspecting the drug name. You are extracting the volume of the drug and the unit of the volume.
+          Units are e.g. ml, l, µl, 병
 
-      asset:
-        instructions: |
-          You are the asset classifier. Input is JSON. Select one or more canonical
-          asset tags (upper/lower) when relevant. Return ONLY AssetOutput.
-        input_model: AssetInput
-        output_model: AssetOutput
-
-      policy:
-        instructions: |
-          You are the policy classifier. Input is JSON. Select one or more canonical
-          policy tags (upper/lower) when relevant. Return ONLY PolicyOutput.
-        input_model: PolicyInput
-        output_model: PolicyOutput
-
-      event:
-        instructions: |
-          You are the event classifier. Input is JSON. Select one or more canonical
-          event labels when relevant. Return ONLY EventOutput.
-        input_model: EventInput
-        output_model: EventOutput
-
-      city:
-        instructions: |
-          You are the city classifier. Input is JSON. Use countries as anchor and
-          output all relevant cities. Return ONLY CityOutput.
-        input_model: CityInput
-        output_model: CityOutput
+          If the drug name does not contain a volume, return -1 for the volume and "unknown" for the unit.
+          Return ONLY VolumeOutput
+        input_model: DrugInput
+        output_model: VolumeOutput
 
     tasks:
-      perceive:
-        agent: perception
+      extraction:
+        agents: [weight_agent, volume_agent]
         input:
-          title: ${{ input.title }}
-          summary: ${{ input.summary }}
-
-      gate:
-        needs: [perceive]
-        agent: gatekeeper
-        input:
-          perceived_news: ${{ tasks.perceive.output.perceived_news }}
-          title: ${{ input.title }}
-          summary: ${{ input.summary }}
-
-      classify:
-        needs: [gate]
-        agents: [country, asset, policy, event]
-        input:
-          perceived_news: ${{ tasks.perceive.output.perceived_news }}
-          title: ${{ input.title }}
-          summary: ${{ input.summary }}
-
-      city:
-        needs: [classify]
-        agent: city
-        input:
-          perceived_news: ${{ tasks.perceive.output.perceived_news }}
-          countries: ${{ tasks.classify.country.countries }}
-
+          drug_name: ${{ input.drug_name }}
+          drug_code: ${{ input.drug_code }}
+      
       finalize:
-        needs: [gate, classify, city]
+        needs: [extraction]
         step: build_pipeline_output
         input:
-          passed_gatekeeper: ${{ tasks.gate.output.passed_gatekeeper }}
-          gatekeeper_reason: ${{ tasks.gate.output.reason }}
-          perceived_news: ${{ tasks.perceive.output.perceived_news }}
-          countries: ${{ tasks.classify.country.countries }}
-          assets: ${{ tasks.classify.asset.assets }}
-          policies: ${{ tasks.classify.policy.policies }}
-          events: ${{ tasks.classify.event.events }}
-          cities: ${{ tasks.city.output.cities }}
+          drug_name: ${{ input.drug_name }}
+          drug_code: ${{ input.drug_code }}
+          weight: ${{ tasks.extraction.weight_agent.weight }}
+          weight_unit: ${{ tasks.extraction.weight_agent.unit }}
+          volume: ${{ tasks.extraction.volume_agent.volume }}
+          volume_unit: ${{ tasks.extraction.volume_agent.unit }}
 
     output:
       from: tasks.finalize.output
+      model: DrugExtractionOutput
+
+  # news_cleaning:
+  #   provider:
+  #     kind: openai
+  #     api_key: ${env:OPENAI_API_KEY}
+  #     default_model: gpt-5-nano
+
+  #   runtime:
+  #     context_mode: merged_and_refs
+  #     skip_policy: gatekeeper_controlled
+  #     retry:
+  #       contract_max_attempts: 2
+  #       contract_backoff_ms: 300
+  #     gatekeeper:
+  #       task: gate
+  #       field: passed_gatekeeper
+  #       skip_tasks: [classify, city]
+
+  #   serve:
+  #     host: 127.0.0.1
+  #     port: 8787
+  #     description: News cleaning pipeline
+
+  #   agents:
+  #     perception:
+  #       instructions: |
+  #         You are the perception stage. Input is JSON. Summarize what is happening,
+  #         who is involved, and where in plain language. Do not invent facts. Return ONLY
+  #         PerceptionOutput.
+  #       input_model: PerceptionInput
+  #       output_model: PerceptionOutput
+
+  #     gatekeeper:
+  #       instructions: |
+  #         You are the gatekeeper stage. Input is JSON. Decide passed_gatekeeper for
+  #         geopolitical or geo-economic relevance, including financial market relevance.
+  #         Return ONLY GatekeeperOutput.
+  #       input_model: GatekeeperInput
+  #       output_model: GatekeeperOutput
+
+  #     country:
+  #       instructions: |
+  #         You are the country classifier. Input is JSON. Extract all directly relevant
+  #         countries. Return ONLY CountryOutput.
+  #       input_model: CountryInput
+  #       output_model: CountryOutput
+
+  #     asset:
+  #       instructions: |
+  #         You are the asset classifier. Input is JSON. Select one or more canonical
+  #         asset tags (upper/lower) when relevant. Return ONLY AssetOutput.
+  #       input_model: AssetInput
+  #       output_model: AssetOutput
+
+  #     policy:
+  #       instructions: |
+  #         You are the policy classifier. Input is JSON. Select one or more canonical
+  #         policy tags (upper/lower) when relevant. Return ONLY PolicyOutput.
+  #       input_model: PolicyInput
+  #       output_model: PolicyOutput
+
+  #     event:
+  #       instructions: |
+  #         You are the event classifier. Input is JSON. Select one or more canonical
+  #         event labels when relevant. Return ONLY EventOutput.
+  #       input_model: EventInput
+  #       output_model: EventOutput
+
+  #     city:
+  #       instructions: |
+  #         You are the city classifier. Input is JSON. Use countries as anchor and
+  #         output all relevant cities. Return ONLY CityOutput.
+  #       input_model: CityInput
+  #       output_model: CityOutput
+
+  #   tasks:
+  #     perceive:
+  #       agent: perception
+  #       input:
+  #         title: ${{ input.title }}
+  #         summary: ${{ input.summary }}
+
+  #     gate:
+  #       needs: [perceive]
+  #       agent: gatekeeper
+  #       input:
+  #         perceived_news: ${{ tasks.perceive.output.perceived_news }}
+  #         title: ${{ input.title }}
+  #         summary: ${{ input.summary }}
+
+  #     classify:
+  #       needs: [gate]
+  #       agents: [country, asset, policy, event]
+  #       input:
+  #         perceived_news: ${{ tasks.perceive.output.perceived_news }}
+  #         title: ${{ input.title }}
+  #         summary: ${{ input.summary }}
+
+  #     city:
+  #       needs: [classify]
+  #       agent: city
+  #       input:
+  #         perceived_news: ${{ tasks.perceive.output.perceived_news }}
+  #         countries: ${{ tasks.classify.country.countries }}
+
+  #     finalize:
+  #       needs: [gate, classify, city]
+  #       step: build_pipeline_output
+  #       input:
+  #         passed_gatekeeper: ${{ tasks.gate.output.passed_gatekeeper }}
+  #         gatekeeper_reason: ${{ tasks.gate.output.reason }}
+  #         perceived_news: ${{ tasks.perceive.output.perceived_news }}
+  #         countries: ${{ tasks.classify.country.countries }}
+  #         assets: ${{ tasks.classify.asset.assets }}
+  #         policies: ${{ tasks.classify.policy.policies }}
+  #         events: ${{ tasks.classify.event.events }}
+  #         cities: ${{ tasks.city.output.cities }}
+
+  #   output:
+  #     from: tasks.finalize.output
+  #     model: PipelineOutput

@@ -1,4 +1,56 @@
 models:
+  DrugInput:
+    type: object
+    fields:
+      drug_name:
+        type: string
+        required: true
+      drug_code:
+        type: string
+        required: true
+
+  WeightOutput:
+    type: object
+    fields:
+      weight:
+        type: number
+        required: true
+      unit:
+        type: string
+        required: true
+
+  VolumeOutput:
+    type: object
+    fields:
+      volume:
+        type: number
+        required: true
+      unit:
+        type: string
+        required: true
+
+  DrugExtractionOutput:
+    type: object
+    fields:
+      drug_name:
+        type: string
+        required: true
+      drug_code:
+        type: string
+        required: true
+      weight:
+        type: number
+        required: true
+      weight_unit:
+        type: string
+        required: true
+      volume:
+        type: number
+        required: true
+      volume_unit:
+        type: string
+        required: true
+
   TestInput:
     type: object
     fields:
@@ -267,48 +319,48 @@ models:
         type: string
         required: true
 
-  PipelineOutput:
-    type: object
-    fields:
-      passed_gatekeeper:
-        type: boolean
-        required: true
-      gatekeeper_reason:
-        type: string
-        required: true
-      summary_distilled:
-        type: string
-        required: true
-      countries:
-        type: array
-        required: true
-        default: []
-        items:
-          $ref: CountryCandidate
-      cities:
-        type: array
-        required: true
-        default: []
-        items:
-          $ref: CityCandidate
-      assets:
-        type: array
-        required: true
-        default: []
-        items:
-          $ref: AssetCandidate
-      policies:
-        type: array
-        required: true
-        default: []
-        items:
-          $ref: PolicyCandidate
-      events:
-        type: array
-        required: true
-        default: []
-        items:
-          $ref: EventCandidate
-      legacy_theme:
-        $ref: LegacyThemeProjection
-        required: true
+  # PipelineOutput:
+  #   type: object
+  #   fields:
+  #     passed_gatekeeper:
+  #       type: boolean
+  #       required: true
+  #     gatekeeper_reason:
+  #       type: string
+  #       required: true
+  #     summary_distilled:
+  #       type: string
+  #       required: true
+  #     countries:
+  #       type: array
+  #       required: true
+  #       default: []
+  #       items:
+  #         $ref: CountryCandidate
+  #     cities:
+  #       type: array
+  #       required: true
+  #       default: []
+  #       items:
+  #         $ref: CityCandidate
+  #     assets:
+  #       type: array
+  #       required: true
+  #       default: []
+  #       items:
+  #         $ref: AssetCandidate
+  #     policies:
+  #       type: array
+  #       required: true
+  #       default: []
+  #       items:
+  #         $ref: PolicyCandidate
+  #     events:
+  #       type: array
+  #       required: true
+  #       default: []
+  #       items:
+  #         $ref: EventCandidate
+  #     legacy_theme:
+  #       $ref: LegacyThemeProjection
+  #       required: true
